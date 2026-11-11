@@ -1,0 +1,260 @@
+Спецификација за лабораториската вежба
+1. Креирање на Spring Boot проект
+Креирајте нов Spring Boot проект со следните карактеристики:
+
+groupId: mk.ukim.finki.wp
+artifactId: lab
+Зависности: Истите како проектот од аудиториските вежби – Spring Web, Thymeleaf и Lombok (видете ги <dependency> таговите во pom.xml)
+Забелешка: Не заборавајте да ја додадете анотацијата @ServletComponentScan на главната класа. Без неа, сервлетите нема да бидат регистрирани и секоја патека ќе враќа 404.
+
+2. Креирање на Model класи
+Дефинирајте пакет mk.ukim.finki.wp.lab.model и креирајте ги следните класи. За getters, setters и конструктори користете Lombok (@Data, @AllArgsConstructor).
+
+2.1 Workshop класа
+Креирајте класа Workshop која содржи:
+
+String title
+String category
+double price
+int capacity – број на слободни места
+2.2 Registration класа
+Креирајте класа Registration која содржи:
+
+String workshopTitle
+String participantName
+String participantEmail
+int numberOfSeats
+3. Креирање на DataHolder класа
+Креирајте класа DataHolder во пакетот mk.ukim.finki.wp.lab.bootstrap, анотирана со @Component, која ќе содржи:
+
+Статична листа: public static List<Workshop> workshops = null;
+Статична листа: public static List<Registration> registrations = null;
+Метод init() анотиран со @PostConstruct кој ги иницијализира листите: workshops со 10 вредности (барем една работилница нека има capacity = 0), а registrations како празна листа.
+4. Креирање на Repository слој
+4.1 WorkshopRepository интерфејс
+Дефинирајте интерфејс WorkshopRepository во пакетот mk.ukim.finki.wp.lab.repository:
+
+public interface WorkshopRepository {
+    List<Workshop> findAll();
+    Optional<Workshop> findByTitle(String title);
+    List<Workshop> search(String text, Double maxPrice);
+}
+4.2 InMemoryWorkshopRepository имплементација
+Креирајте класа InMemoryWorkshopRepository во пакетот mk.ukim.finki.wp.lab.repository.impl, анотирана со @Repository, која го имплементира WorkshopRepository интерфејсот.
+
+Имплементација (користете Java Streams):
+
+findAll() – ја враќа листата од DataHolder.workshops
+findByTitle(String title) – ја враќа работилницата со дадениот наслов, или Optional.empty() ако таква не постои
+search(String text, Double maxPrice) – ги враќа работилниците чиј наслов или категорија го содржи текстот text (без разлика на големи и мали букви) и чија цена е помала или еднаква на maxPrice. Ако text е null или празен, не филтрирајте по текст. Ако maxPrice е null, не филтрирајте по цена.
+4.3 RegistrationRepository интерфејс
+Дефинирајте интерфејс RegistrationRepository во пакетот mk.ukim.finki.wp.lab.repository:
+
+public interface RegistrationRepository {
+    Registration save(Registration registration);
+    List<Registration> findAll();
+}
+4.4 InMemoryRegistrationRepository имплементација
+Креирајте класа InMemoryRegistrationRepository во пакетот mk.ukim.finki.wp.lab.repository.impl која го имплементира RegistrationRepository интерфејсот.
+
+Имплементација:
+
+save(Registration registration) – ја додава регистрацијата во DataHolder.registrations и ја враќа зачуваната регистрација
+findAll() – ја враќа листата од DataHolder.registrations
+5. Креирање на Service слој
+5.1 WorkshopService интерфејс
+Дефинирајте интерфејс WorkshopService во пакетот mk.ukim.finki.wp.lab.service:
+
+public interface WorkshopService {
+    List<Workshop> listAll();
+    List<Workshop> search(String text, Double maxPrice);
+}
+5.2 RegistrationService интерфејс
+Дефинирајте интерфејс RegistrationService во пакетот mk.ukim.finki.wp.lab.service:
+
+public interface RegistrationService {
+    Registration register(String workshopTitle, String participantName,
+                          String participantEmail, int numberOfSeats);
+}
+5.3 Имплементација на сервисите
+Имплементирајте ги сервисите во пакетот mk.ukim.finki.wp.lab.service.impl (креирајте WorkshopServiceImpl и RegistrationServiceImpl класи, анотирани со @Service). Зависностите се внесуваат преку конструктор.
+
+WorkshopService треба да зависи од WorkshopRepository.
+RegistrationService треба да зависи од RegistrationRepository и WorkshopRepository.
+Методот register треба да:
+
+Фрли IllegalArgumentException ако некој од текстуалните параметри е null или празен, или ако numberOfSeats е помал од 1
+Ја пронајде работилницата преку findByTitle; ако таа не постои, фрли IllegalArgumentException
+Фрли IllegalArgumentException со порака "Not enough free seats" ако numberOfSeats е поголем од capacity на работилницата
+Го намали capacity на работилницата за numberOfSeats, ја зачува регистрацијата и ја врати
+6. Креирање на Web слој (Servlets + Thymeleaf)
+6.1 WorkshopListServlet
+Креирајте сервлет WorkshopListServlet во пакетот mk.ukim.finki.wp.lab.web.servlet и мапирајте го на патеката /. Овој сервлет треба да зависи од WorkshopService и SpringTemplateEngine и да ги прикаже сите работилници добиени од методот listAll().
+
+Овозможете корисникот да избере една од работилниците и да наведе број на места што сака да ги резервира. Креирајте по едно радио копче за секоја работилница, каде вредноста на копчето е насловот на работилницата, а текстот кој се прикажува е во форматот: Title: <title>, Category: <category>, Price: <price> MKD, Free seats: <capacity>
+
+Работилниците без слободни места (capacity = 0) треба да се прикажат, но нивното радио копче треба да биде оневозможено (th:disabled).
+
+Ако во барањето постои параметар errorMessage, прикажете ја пораката со црвена боја на врвот од страната (th:if).
+
+Во фолдерот src/main/resources/templates додадете фајл listWorkshops.html и прилагодете го за изгледот на оваа страница.
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Workshop Registration - Choose a Workshop</title>
+    <style type="text/css">
+        body {
+            width: 800px;
+            margin: auto;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+        }
+        .workshop-option {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .workshop-option:hover {
+            background-color: #f5f5f5;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Welcome to our Workshop Registration App</h1>
+</header>
+<main>
+    <!-- Display the errorMessage here (only if it exists), using the "error" class -->
+
+    <form action="/" method="GET">
+        <h2>Search workshops:</h2>
+        <label>Title or category contains:</label>
+        <input type="text" name="text">
+        <label>Max price:</label>
+        <input type="number" name="maxPrice" min="0" step="0.01">
+        <input type="submit" value="Search">
+    </form>
+
+    <form action="/registration" method="POST">
+        <h2>Choose a workshop:</h2>
+        <!-- Display a radio button for each workshop,
+             the value should be the workshop title
+             and the displayed text should be:
+             Title: <title>, Category: <category>, Price: <price> MKD, Free seats: <capacity>
+             Workshops with 0 free seats are shown, but their radio button is disabled -->
+
+        <h2>Enter your information:</h2>
+        <label>Your Name:</label>
+        <input type="text" name="participantName" required><br/>
+        <label>Your Email:</label>
+        <input type="email" name="participantEmail" required><br/>
+
+        <h2>Choose number of seats:</h2>
+        <input type="number" name="numSeats" min="1" required><br/>
+        <br/>
+        <input type="submit" value="Register">
+    </form>
+</main>
+</body>
+</html>
+6.2 RegistrationServlet
+При избор на работилница, треба да се прикаже потврда за регистрацијата. За оваа цел креирајте сервлет RegistrationServlet мапиран на /registration. Овој сервлет треба да зависи од RegistrationService и SpringTemplateEngine.
+
+Во doPost методот сервлетот треба да:
+
+Ги прочита податоците испратени од формата (избраната работилница, број на места, име и e-mail на учесникот)
+Креира регистрација со повикување на методот register() од сервисот
+Ако сервисот фрли IllegalArgumentException, направи redirect кон /?errorMessage=<порака>, каде пораката е онаа од исклучокот (енкодирајте ја со URLEncoder.encode(message, StandardCharsets.UTF_8))
+Во спротивно, ја прикаже страната за потврда со деталите за регистрацијата, IP адресата на клиентот (req.getRemoteAddr()) и прелистувачот на клиентот (заглавието User-Agent)
+Во фолдерот src/main/resources/templates додадете фајл registrationConfirmation.html и прилагодете го за изгледот на страната за потврда. Динамички пополнете ги податоците во табелата.
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Workshop Registration - Confirmation</title>
+    <style type="text/css">
+        body {
+            width: 800px;
+            margin: auto;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, td, th {
+            border: 1px solid #333;
+        }
+        th {
+            background-color: #2E86C1;
+            color: white;
+            padding: 12px;
+        }
+        td {
+            padding: 10px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<section>
+    <header>
+        <h1>Workshop Registration - Confirmation</h1>
+    </header>
+    <table>
+        <tr>
+            <th colspan="2">Your Registration Status</th>
+        </tr>
+        <tr>
+            <td><b>Participant Name</b></td>
+            <td><!-- Display participant name --></td>
+        </tr>
+        <tr>
+            <td><b>Participant Email</b></td>
+            <td><!-- Display participant email --></td>
+        </tr>
+        <tr>
+            <td><b>Client IP Address</b></td>
+            <td><!-- Display IP address --></td>
+        </tr>
+        <tr>
+            <td><b>Browser</b></td>
+            <td><!-- Display the User-Agent header --></td>
+        </tr>
+        <tr>
+            <td><b>Workshop</b></td>
+            <td><!-- Display workshop title --></td>
+        </tr>
+        <tr>
+            <td><b>Number of seats</b></td>
+            <td><!-- Display number of seats --></td>
+        </tr>
+    </table>
+    <p><a href="/">Back to workshops</a></p>
+</section>
+</body>
+</html>
+7. Имплементација на пребарување
+Да се имплементира пребарување на работилниците на почетната страна listWorkshops.html преку формата за пребарување (метод GET, параметри text и maxPrice). Ако е испратен барем еден од параметрите, WorkshopListServlet треба да го повика search() наместо listAll() и да ги прикаже само работилниците кои ги исполнуваат условите:
+
+работилници чиј наслов или категорија го содржи текстот внесен од корисникот
+работилници чија цена е помала или еднаква на внесената максимална цена
+Празните параметри третирајте ги како null. Резултатите од пребарувањето се прикажуваат во истата листа со радио копчиња, така што корисникот може веднаш да се регистрира за некоја од пронајдените работилници.
