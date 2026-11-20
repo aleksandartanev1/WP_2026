@@ -1,0 +1,47 @@
+Using a minimal number of annotations, markup the code below to successfully initialize the Spring Core Container.
+You need to choose the semantically most appropriate annotation for the class. Note: if there are two fields somewhere and you think one should be 
+"none of the above" then choose this option for the second field. If there are 2 annotations, 
+sort them by name in ascending order
+
+[@Configuration]
+class Config {
+	[@Bean][@Profile("x1")]
+	public X x1() {
+		// return x1 instance of X
+	}
+	[@Bean][@Profile("x2")]
+	public X x2() {
+		// return x2 instance of X
+	}
+}
+[@Component]
+class ServiceUsingX1 {
+	[@Autowired]
+	private Repository repository;
+	[@Autowired]
+	[@Qualifier("x1")]
+	private X x;
+	// ...
+}
+[@Component]
+class ServiceUsingX2 {
+	[@Autowired]
+	private Repository repository;
+	[@Autowired]
+	[@Qualifier("x2")]
+	private X x;
+
+ 	public ServiceUsingX2([@Autowired]Repository repository,[@Autowired]X x) {
+		// ...
+	}
+	// ...
+}
+[@Repository]
+class Repository {
+	// ...
+}
+
+Options:
+[@Bean][@Profile("x1")][@Qualifier("x1")][@Configuration][@Qualifier("x2")][@ComponentScan]
+[@Controller][@Autowired]
+[@Profile("x2")][@Service][none of the above options][@Component][@Repository]

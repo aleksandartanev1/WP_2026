@@ -1,0 +1,42 @@
+The REST controller ConsultationSlotApi is mapped to the following location: /api/consultations. 
+The application is started on port 8080. Which of the following methods will successfully process a POST 
+request in the following form:
+
+POST http://localhost:8080/api/consultations
+professorId: petko.petkov
+Content-Type: application/x-www-form-urlencoded
+
+roomName=114&dayOfWeek=2&from=15:00:00&to=17:00:00
+
+Select the missing elements so that this method is called for the above query:
+
+[none of the above]
+[@PostMapping]
+Public ConsultationSlot createSlot([@RequestParam(required = false)] String professorID,
+			           [@RequestParam] String roomName,
+			           [@RequestParam] Integer dayOfWeek,
+			           [@RequestParam(required = false)][@DateTimeFormat...(ISO.DATE)]
+			           [@RequestParam][ISO.TIME]
+			           [@RequestParam][ISO.TIME]
+	ConsultationSlot result = ConsultationSlotService.createSlot(professorID, roomName, DayOfWeek.of(dayOfWeek), 
+	date, from, to);
+	return result;
+}
+
+As a result of this request, the page [createSlot].html will be displayed and a property with the name 
+[consultationSlot] and value [result] will be set in the model.
+
+Options Answers:
+[@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)][@RequestParam(required = false)]
+[@RequestAttribute][@ResponseStatus(HttpStatus.CREATED)]
+[@Controller][@ResponseBody]
+[@PostMapping][none of the above]
+[@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)][@RequestParam]
+[@ResponseStatus(HttpStatus.NOT_FOUND)][consultationSlot]
+[@SessionAttribute][@RequestMapping]
+[@GetMapping][result]
+[@CookieValue][@RequestBody]
+[@ResponseStatus(HttpStatus.SEE_OTHER][@RequestHeader]
+[@ResponseStatus(HttpStatus.BAD_REQUEST][createSlot]
+[ConsultationSlot][@ResponseStatus(HttpStatus.FORBIDDEN)]
+[@ResponseStatus(HttpStatus.OK]
